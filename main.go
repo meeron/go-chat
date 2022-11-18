@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/meeron/go-chat/client"
 	"github.com/meeron/go-chat/server"
 	"github.com/meeron/go-chat/shared"
 	"net"
@@ -31,25 +32,29 @@ func main() {
 
 	if *listen != "" {
 		listner = server.Run(*listen, serverStatus)
+
+		reader := bufio.NewReader(os.Stdin)
+		for {
+			fmt.Print("Command: ")
+			cmd, _ := reader.ReadString('\n')
+
+			cmd = strings.TrimSpace(cmd)
+
+			if cmd == "quit" {
+				(*listner).Close()
+
+				status := <-serverStatus
+
+				if (*status).IsClosed {
+					return
+				}
+			}
+
+			fmt.Println("Invalid command ", cmd)
+		}
 	}
 
-	reader := bufio.NewReader(os.Stdin)
-	for {
-		fmt.Print("Command: ")
-		cmd, _ := reader.ReadString('\n')
-
-		cmd = strings.TrimSpace(cmd)
-
-		if cmd == "quit" {
-			(*listner).Close()
-
-			status := <-serverStatus
-
-			if (*status).IsClosed {
-				return
-			}
-		}
-
-		fmt.Println("Invalid command ", cmd)
+	if *connect != "" {
+		client.Connect(*connect)
 	}
 }
